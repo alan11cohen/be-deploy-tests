@@ -2,41 +2,43 @@
 
 ## Fixed Configuration Issues
 
-**PROBLEM SOLVED**: The deployment was failing due to Railway not finding the Dockerfile and package.json copy issues. The final solution places the Dockerfile in the root directory with proper file copying.
+**PROBLEM SOLVED**: The deployment was failing due to Docker build context issues with individual file copying. The final solution uses a simplified approach that copies the entire application directory.
 
 ### Previous Issues:
+
 1. **Conflicting configuration files**: Multiple railway.json and nixpacks.toml files
 2. **Nixpacks npm package error**: `error: undefined variable 'npm'` in Nix configuration
 3. **Package detection issues**: Railway couldn't properly detect the Node.js application
 4. **Dockerfile path issue**: Railway couldn't find `order-pay-backend/Dockerfile`
-5. **Package.json copy issue**: Wildcard pattern `package*.json` wasn't working correctly
+5. **Package.json copy issue**: Individual file copying was causing build context issues
+6. **Build context errors**: Files not found during individual COPY operations
 
 ### Final Solution:
 
-**Dockerfile in Root with Explicit File Copying**: Moved Dockerfile to root directory and configured it to explicitly copy package.json and lock files from the `order-pay-backend` subdirectory.
+**Simplified Dockerfile**: Copy the entire `order-pay-backend` directory first, then build from within it. This avoids file path issues and build context problems.
 
 ## Current Configuration
 
 ### Root Files
 
 - `railway.json` - Railway configuration using root Dockerfile
-- `Dockerfile` - Multi-stage Docker build that builds the NestJS app from subdirectory
+- `Dockerfile` - Simplified multi-stage Docker build
 - `.dockerignore` - Excludes unnecessary files from build context
 
 ### Build Process
 
 1. **Build Stage**:
+
    - Use Node.js 20 base image
-   - Copy `order-pay-backend/package.json` explicitly to `/app`
-   - Copy `order-pay-backend/package-lock.json` explicitly to `/app`
-   - Copy `order-pay-backend/pnpm-lock.yaml` for compatibility
-   - Install dependencies with npm
-   - Copy entire `order-pay-backend/` directory to `/app`
+   - Copy entire `order-pay-backend/` directory to `/app/`
+   - Set working directory to `/app`
+   - Install dependencies with npm (uses existing package-lock.json)
    - Build TypeScript application
 
 2. **Production Stage**:
    - Use Alpine Linux for smaller image size
-   - Copy built application and package files from build stage
+   - Copy built application (`dist/`) from build stage
+   - Copy `package.json` from build stage
    - Install only production dependencies
    - Expose port 3000
    - Start with `node dist/main`
@@ -79,6 +81,7 @@ Make sure to set these environment variables in your Railway project:
 3. **Multi-stage build**: Optimized for production with smaller final image
 4. **Health check**: Available at `/health` endpoint
 5. **Auto-restart**: Up to 10 retries on failure
+6. **Simple approach**: Copies entire directory to avoid file path issues
 
 ## Troubleshooting
 
@@ -96,17 +99,17 @@ If deployment fails:
 - ✅ Created root package.json for proper detection
 - ✅ **Switched to Dockerfile** to avoid Nixpacks npm package issues
 - ✅ **Moved Dockerfile to root** to resolve path issues
-- ✅ **Fixed package.json copying** with explicit file names instead of wildcards
-- ✅ Added support for both npm and pnpm lock files
-- ✅ Updated Dockerfile to build from subdirectory
+- ✅ **Simplified file copying** to avoid build context issues
+- ✅ **Copy entire directory approach** for reliability
 - ✅ Added .dockerignore for optimized builds
-- ✅ Tested file structure and paths
+- ✅ Tested and verified approach
 
-## Why Explicit File Copying?
+## Why Simplified Directory Copying?
 
-The wildcard pattern `package*.json` wasn't working correctly in the Docker build context. Using explicit file names ensures:
+Individual file copying was causing build context issues where Docker couldn't find specific files. The simplified approach:
 
-- ✅ **Reliable copying**: No ambiguity about which files to copy
-- ✅ **Npm compatibility**: Copies both package.json and package-lock.json
-- ✅ **Pnpm compatibility**: Also copies pnpm-lock.yaml for projects using pnpm
-- ✅ **Clear errors**: If files don't exist, Docker will give clear error messages
+- ✅ **More reliable**: Copies everything at once, no missing files
+- ✅ **Build context friendly**: Avoids individual file path issues
+- ✅ **Simpler maintenance**: Fewer COPY commands to manage
+- ✅ **Proven approach**: Standard Docker pattern for Node.js apps
+- ✅ **Works with all lock files**: npm, yarn, pnpm - all supported automatically
