@@ -2,17 +2,18 @@
 
 ## Fixed Configuration Issues
 
-**PROBLEM SOLVED**: The deployment was failing due to Railway not finding the Dockerfile. The final solution places the Dockerfile in the root directory.
+**PROBLEM SOLVED**: The deployment was failing due to Railway not finding the Dockerfile and package.json copy issues. The final solution places the Dockerfile in the root directory with proper file copying.
 
 ### Previous Issues:
 1. **Conflicting configuration files**: Multiple railway.json and nixpacks.toml files
 2. **Nixpacks npm package error**: `error: undefined variable 'npm'` in Nix configuration
 3. **Package detection issues**: Railway couldn't properly detect the Node.js application
 4. **Dockerfile path issue**: Railway couldn't find `order-pay-backend/Dockerfile`
+5. **Package.json copy issue**: Wildcard pattern `package*.json` wasn't working correctly
 
 ### Final Solution:
 
-**Dockerfile in Root**: Moved Dockerfile to root directory and configured it to build from the `order-pay-backend` subdirectory.
+**Dockerfile in Root with Explicit File Copying**: Moved Dockerfile to root directory and configured it to explicitly copy package.json and lock files from the `order-pay-backend` subdirectory.
 
 ## Current Configuration
 
@@ -26,14 +27,16 @@
 
 1. **Build Stage**:
    - Use Node.js 20 base image
-   - Copy `order-pay-backend/package*.json` to `/app`
-   - Install dependencies
+   - Copy `order-pay-backend/package.json` explicitly to `/app`
+   - Copy `order-pay-backend/package-lock.json` explicitly to `/app`
+   - Copy `order-pay-backend/pnpm-lock.yaml` for compatibility
+   - Install dependencies with npm
    - Copy entire `order-pay-backend/` directory to `/app`
    - Build TypeScript application
 
 2. **Production Stage**:
    - Use Alpine Linux for smaller image size
-   - Copy built application and package.json from build stage
+   - Copy built application and package files from build stage
    - Install only production dependencies
    - Expose port 3000
    - Start with `node dist/main`
@@ -93,15 +96,17 @@ If deployment fails:
 - ✅ Created root package.json for proper detection
 - ✅ **Switched to Dockerfile** to avoid Nixpacks npm package issues
 - ✅ **Moved Dockerfile to root** to resolve path issues
+- ✅ **Fixed package.json copying** with explicit file names instead of wildcards
+- ✅ Added support for both npm and pnpm lock files
 - ✅ Updated Dockerfile to build from subdirectory
 - ✅ Added .dockerignore for optimized builds
 - ✅ Tested file structure and paths
 
-## Why Root Dockerfile?
+## Why Explicit File Copying?
 
-Railway had issues finding the Dockerfile at `order-pay-backend/Dockerfile`. Moving it to the root and configuring it to build from the subdirectory resolved the path detection issue:
+The wildcard pattern `package*.json` wasn't working correctly in the Docker build context. Using explicit file names ensures:
 
-- ✅ **Railway can find it**: No path resolution issues
-- ✅ **Builds correctly**: Properly copies from subdirectory
-- ✅ **Optimized**: Uses .dockerignore for faster builds
-- ✅ **Production ready**: Multi-stage build for smaller images
+- ✅ **Reliable copying**: No ambiguity about which files to copy
+- ✅ **Npm compatibility**: Copies both package.json and package-lock.json
+- ✅ **Pnpm compatibility**: Also copies pnpm-lock.yaml for projects using pnpm
+- ✅ **Clear errors**: If files don't exist, Docker will give clear error messages
