@@ -1,0 +1,14 @@
+node_modules
+.git
+.DS_Store
+*.log
+coverage
+.nyc_output
+dist
+.env
+.env.local
+README.md
+DEPLOYMENT.md
+order-pay-backend/node_modules
+order-pay-backend/dist
+order-pay-backend/.env 

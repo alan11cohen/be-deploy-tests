@@ -2,33 +2,39 @@
 
 ## Fixed Configuration Issues
 
-**PROBLEM SOLVED**: The deployment was failing due to Nixpacks package resolution issues. The solution was to switch to using the existing Dockerfile which is more reliable.
+**PROBLEM SOLVED**: The deployment was failing due to Railway not finding the Dockerfile. The final solution places the Dockerfile in the root directory.
 
 ### Previous Issues:
-
 1. **Conflicting configuration files**: Multiple railway.json and nixpacks.toml files
 2. **Nixpacks npm package error**: `error: undefined variable 'npm'` in Nix configuration
 3. **Package detection issues**: Railway couldn't properly detect the Node.js application
+4. **Dockerfile path issue**: Railway couldn't find `order-pay-backend/Dockerfile`
 
 ### Final Solution:
 
-**Switched to Dockerfile**: Using the existing, tested Dockerfile instead of Nixpacks for more reliable builds.
+**Dockerfile in Root**: Moved Dockerfile to root directory and configured it to build from the `order-pay-backend` subdirectory.
 
 ## Current Configuration
 
 ### Root Files
 
-- `railway.json` - Railway configuration using Dockerfile builder
-- `order-pay-backend/Dockerfile` - Multi-stage Docker build for production
+- `railway.json` - Railway configuration using root Dockerfile
+- `Dockerfile` - Multi-stage Docker build that builds the NestJS app from subdirectory
+- `.dockerignore` - Excludes unnecessary files from build context
 
 ### Build Process
 
 1. **Build Stage**:
    - Use Node.js 20 base image
-   - Install dependencies and build TypeScript application
+   - Copy `order-pay-backend/package*.json` to `/app`
+   - Install dependencies
+   - Copy entire `order-pay-backend/` directory to `/app`
+   - Build TypeScript application
+
 2. **Production Stage**:
    - Use Alpine Linux for smaller image size
-   - Copy built application and production dependencies
+   - Copy built application and package.json from build stage
+   - Install only production dependencies
    - Expose port 3000
    - Start with `node dist/main`
 
@@ -65,8 +71,8 @@ Make sure to set these environment variables in your Railway project:
 
 ## Deployment Notes
 
-1. **Builder**: Now uses Dockerfile instead of Nixpacks
-2. **Dockerfile location**: `order-pay-backend/Dockerfile`
+1. **Builder**: Uses Dockerfile in root directory
+2. **Dockerfile location**: `./Dockerfile` (root level)
 3. **Multi-stage build**: Optimized for production with smaller final image
 4. **Health check**: Available at `/health` endpoint
 5. **Auto-restart**: Up to 10 retries on failure
@@ -86,14 +92,16 @@ If deployment fails:
 - ✅ Removed conflicting nixpacks.toml files
 - ✅ Created root package.json for proper detection
 - ✅ **Switched to Dockerfile** to avoid Nixpacks npm package issues
-- ✅ Updated Dockerfile to expose port properly
-- ✅ Tested build process locally
+- ✅ **Moved Dockerfile to root** to resolve path issues
+- ✅ Updated Dockerfile to build from subdirectory
+- ✅ Added .dockerignore for optimized builds
+- ✅ Tested file structure and paths
 
-## Why Dockerfile Instead of Nixpacks?
+## Why Root Dockerfile?
 
-Nixpacks was failing with `error: undefined variable 'npm'` due to package resolution issues in the Nix environment. The existing Dockerfile is:
+Railway had issues finding the Dockerfile at `order-pay-backend/Dockerfile`. Moving it to the root and configuring it to build from the subdirectory resolved the path detection issue:
 
-- ✅ **Proven to work** - Already tested and functional
-- ✅ **More reliable** - No dependency on Nix package resolution
-- ✅ **Optimized** - Multi-stage build for smaller production images
-- ✅ **Simpler** - Standard Docker approach that's widely supported
+- ✅ **Railway can find it**: No path resolution issues
+- ✅ **Builds correctly**: Properly copies from subdirectory
+- ✅ **Optimized**: Uses .dockerignore for faster builds
+- ✅ **Production ready**: Multi-stage build for smaller images
