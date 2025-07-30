@@ -1,17 +1,17 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /build
-COPY . .
-RUN cd order-pay-backend && npm install && npm run build
-
-# Production stage  
 FROM node:20-alpine
 
 WORKDIR /app
-COPY --from=builder /build/order-pay-backend/dist ./dist
-COPY --from=builder /build/order-pay-backend/package*.json ./
-RUN npm install --omit=dev
 
+# Copy everything
+COPY . .
+
+# Go to the backend directory and build
+WORKDIR /app/order-pay-backend
+RUN npm install
+RUN npm run build
+
+# Expose port
 EXPOSE 3000
-CMD ["node", "dist/main"]
+
+# Start the app
+CMD ["npm", "run", "start:prod"]
