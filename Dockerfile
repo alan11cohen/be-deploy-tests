@@ -1,11 +1,11 @@
 # Etapa 1: Build
 FROM node:20 AS build
 
-# Copy the entire backend directory
-COPY order-pay-backend/ /app/
-
-# Set working directory to the app
+# Set working directory first
 WORKDIR /app
+
+# Copy the entire backend directory contents to current directory
+COPY order-pay-backend/ ./
 
 # Install dependencies
 RUN npm install
