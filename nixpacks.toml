@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs_20", "npm"]
 
 [phases.install]
-cmds = ["cd order-pay-backend && npm install"]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = ["cd order-pay-backend && npm run build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "cd order-pay-backend && npm run start:prod" 
+cmd = "npm run start:prod" 

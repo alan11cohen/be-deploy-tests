@@ -1,5 +1,26 @@
 # Railway Deployment Guide
 
+## Fixed Configuration Issues
+
+**PROBLEM SOLVED**: The deployment was failing because of conflicting configuration files. The solution involved:
+
+1. **Removed duplicate configs**: Deleted conflicting `railway.json` and `nixpacks.toml` files from the subdirectory
+2. **Created root package.json**: Added a deployment wrapper that properly delegates to the NestJS app
+3. **Simplified configuration**: Railway now detects this as a standard Node.js project
+
+## Current Configuration
+
+### Root Files
+- `package.json` - Deployment wrapper with build scripts
+- `railway.json` - Railway-specific configuration  
+- `nixpacks.toml` - Nixpacks build configuration
+
+### Build Process
+1. **Setup**: Install Node.js 20 and npm
+2. **Install**: Run `npm install` (automatically runs `postinstall` script)
+3. **Build**: Run `npm run build` (delegates to `cd order-pay-backend && npm run build`)
+4. **Start**: Run `npm run start:prod` (delegates to `cd order-pay-backend && npm run start:prod`)
+
 ## Environment Variables Required
 
 Make sure to set these environment variables in your Railway project:
@@ -49,3 +70,11 @@ If deployment fails:
 2. Verify that the database is accessible from Railway
 3. Check the build logs for any compilation errors
 4. Ensure the database migrations have been run
+
+## What Was Fixed
+
+- ✅ Removed conflicting railway.json files
+- ✅ Removed conflicting nixpacks.toml files  
+- ✅ Created root package.json for proper detection
+- ✅ Simplified build commands
+- ✅ Tested build process locally
