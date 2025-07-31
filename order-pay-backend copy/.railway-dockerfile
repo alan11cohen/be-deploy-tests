@@ -1,0 +1,2 @@
+# Este archivo le dice a Railway que use el Dockerfile
+# Railway debe usar DOCKERFILE como builder
